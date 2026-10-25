@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera 3X – dual video demo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f6fa;
+      padding: 2rem 1.5rem;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* app names bar */
+    .app-names-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+    .app-name-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      padding: 0.6rem 1.2rem;
+      border-radius: 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #e2e8f0;
+      font-size: 0.95rem;
+    }
+    .app-name-chip i {
+      color: #3b82f6;
+    }
+    .app-name-chip:hover {
+      background: #eef2ff;
+      border-color: #b9d0fa;
+    }
+
+    /* grid */
+    .app-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .app-card {
+      background: white;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+      border: 1px solid #eef2f6;
+      transition: box-shadow 0.2s;
+    }
+    .app-card.highlight {
+      box-shadow: 0 0 0 4px #3b82f6, 0 12px 30px rgba(0,0,0,0.1);
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      background: #0f172a;
+      cursor: pointer;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+    }
+    .video-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: black;
+    }
+    .play-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.25);
+      transition: opacity 0.2s;
+      pointer-events: none;
+      font-size: 4rem;
+      color: white;
+      opacity: 0.9;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .play-overlay i {
+      pointer-events: none;
+    }
+
+    .card-content {
+      padding: 1.5rem 1.8rem 1.8rem;
+    }
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .card-header h3 i {
+      color: #3b82f6;
+      font-size: 1.4rem;
+    }
+    .price-badge {
+      background: #eef2ff;
+      color: #1e40af;
+      font-weight: 600;
+      padding: 0.35rem 0.9rem;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+    }
+    .price-badge i {
+      color: #3b82f6;
+    }
+    .app-desc {
+      color: #334155;
+      line-height: 1.6;
+      margin-bottom: 1.4rem;
+      font-size: 0.98rem;
+    }
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+    }
+    .action-row a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: 0.15s;
+      border: 1px solid transparent;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+    .action-row a i {
+      font-size: 0.95rem;
+    }
+    .download-btn {
+      background: #3b82f6 !important;
+      color: white !important;
+      border-color: #3b82f6 !important;
+    }
+    .download-btn:hover {
+      background: #2563eb !important;
+    }
+    .store-btn.amazon {
+      background: #ff9900 !important;
+      color: #0f172a !important;
+      border-color: #ff9900 !important;
+    }
+    .store-btn.itch {
+      background: #fa5c5c !important;
+      color: white !important;
+      border-color: #fa5c5c !important;
+    }
+    .store-btn.google {
+      background: #34a853 !important;
+      color: white !important;
+      border-color: #34a853 !important;
+    }
+    .store-btn.samsung {
+      background: #1428a0 !important;
+      color: white !important;
+      border-color: #1428a0 !important;
+    }
+    .source-btn {
+      background: #1e293b !important;
+      color: white !important;
+      border-color: #1e293b !important;
+    }
+    .action-row a:hover {
+      filter: brightness(0.92);
+      transform: translateY(-1px);
+    }
+
+    /* simple modal for completeness */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-box {
+      background: white;
+      max-width: 400px;
+      width: 90%;
+      padding: 2rem;
+      border-radius: 32px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .modal-box h3 {
+      margin-bottom: 1rem;
+    }
+    .modal-box p {
+      margin-bottom: 1.5rem;
+      color: #475569;
+    }
+    .modal-close {
+      background: #1e293b;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.8rem;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal-close:hover {
+      background: #0f172a;
+    }
+    .modal-close-icon {
+      position: absolute;
+      top: 1.2rem;
+      right: 1.2rem;
+      font-size: 1.3rem;
+      color: #94a3b8;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- app names bar (render via js) -->
+  <div id="appNamesList" class="app-names-bar"></div>
+
+  <!-- grid where apps render -->
+  <div id="appGrid" class="app-grid"></div>
+</div>
+
+<!-- simple contact modal (to keep original structure) -->
+<div id="contactModal" class="modal">
+  <div class="modal-box">
+    <button class="modal-close-icon" id="closeModalBtn"><i class="fas fa-times"></i></button>
+    <h3>Contact / Sell</h3>
+    <p>This is a demo modal. Click outside or close.</p>
+    <button class="modal-close" id="sellCtaBtn">Go to index</button>
+  </div>
+</div>
+
+<script>
+(function() {
+    const apps = [
+      { 
+        id: 1,  
+        title:"Camera 3X",
+        name: "Camera 3X",
+        icon: "fa-camera",
+        desc: "Camera 3X is a Simultaneous Photo and Video Capture allowing users to record a video and capture high-resolution pictures at the same time without interruption.", 
+        videoFile: "Camera3X.mp4", 
+        videoFile1: "DualCamera.mp4",   // second video for id 1
+        apkFile: "apk/Camera3X.apk",
+        sourcePrice: "$10,000 GYD/$39.99 USD", 
+        mmgLink: "cam.html",
+        sourceLink: "https://ccs-software-inc.itch.io/camera-3x"
+      },
+      { 
+        id: 2, 
+        title:"Dual Camera 3X",
+        name: "Dual Camera 3X",
+        icon: "fa-camera",
+        desc: "Dual Camera 3X is an Android camera application that enables simultaneous photo and video capture using both front and back cameras. The app creates a split-screen view showing both camera feeds in real-time.", 
+        videoFile: "DualCamera3X.mp4", 
+        apkFile: "apk/DualCamera3X.apk",
+        sourcePrice: "$15,000 GYD/$59.99 USD", 
+        mmgLink: "dualcam.html",
+        sourceLink: "https://ccs-software-inc.itch.io/dual-camera-3x"
+      },
+      { 
+        id: 3,
+        title:"Split Screen Browser For - TV",		
+        name: "Split Screen Browser For - TV",
+        icon: "fa-tv",		
+        desc: "Split Screen Browser - TV lets the user to indicate the web browsing into two separate browsing screen. You can web surfing on separate screens so you can easily surf and watch your favorite websites at one time.", 
+        videoFile: "SplitScreen.mp4", 
+        apkFile: "apk/SplitScreen.apk",
+        sourcePrice: "$12,500 GYD/$49.99 USD", 
+        mmgLink: "screen.html",
+        sourceLink: "https://ccs-software-inc.itch.io/split-screen-browser-tv"
+      }
+    ];
+
+    const grid = document.getElementById("appGrid");
+    const appNamesList = document.getElementById("appNamesList");
+
+    // store video wrappers that have dual video sequences (for id=1)
+    const dualVideoWrappers = new Map(); // appId -> { wrapper, videos: [video1, video2], currentIndex }
+
+    function renderAppNamesBar() {
+        if (!appNamesList) return;
+        appNamesList.innerHTML = "";
+        apps.forEach((app) => {
+            const chip = document.createElement("span");
+            chip.className = "app-name-chip";
+            chip.setAttribute("role", "button");
+            chip.setAttribute("tabindex", "0");
+            chip.setAttribute("data-app-id", app.id);
+            chip.innerHTML = `<i class="fas ${app.icon}"></i>${app.name}`;
+
+            chip.addEventListener("click", () => scrollToApp(app.id));
+            chip.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    scrollToApp(app.id);
+                }
+            });
+
+            appNamesList.appendChild(chip);
+        });
+    }
+
+    function scrollToApp(appId) {
+        const card = document.querySelector(`.app-card[data-app-id="${appId}"]`);
+        if (!card) return;
+
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        document.querySelectorAll(".app-card.highlight").forEach((el) => {
+            el.classList.remove("highlight");
+        });
+
+        setTimeout(() => {
+            card.classList.add("highlight");
+        }, 350);
+
+        setTimeout(() => {
+            card.classList.remove("highlight");
+        }, 2000);
+    }
+
+    // Helper: create video element with source
+    function createVideoElement(src, muted = true, loop = false) {
+        const video = document.createElement('video');
+        video.muted = muted;
+        video.loop = loop;
+        video.playsInline = true;
+        video.preload = "metadata";
+        video.setAttribute('playsinline', '');
+        const source = document.createElement('source');
+        source.src = src;
+        source.type = "video/mp4";
+        video.appendChild(source);
+        // fallback text
+        video.appendChild(document.createTextNode('Your browser does not support the video tag.'));
+        return video;
+    }
+
+    function renderApps() {
+        grid.innerHTML = "";
+
+        apps.forEach((app) => {
+            const card = document.createElement('div');
+            card.className = 'app-card';
+            card.setAttribute('data-app-id', app.id);
+
+            // --- video area (special handling for id === 1 with two videos) ---
+            let videoWrapper = null;
+            if (app.videoFile) {
+                videoWrapper = document.createElement('div');
+                videoWrapper.className = 'video-wrapper';
+                // store data-video for reference
+                videoWrapper.setAttribute('data-video', `videos/${app.videoFile}`);
+
+                // Check if this app has a second video (only for id 1 currently, but check videoFile1)
+                const hasSecondVideo = app.videoFile1 && app.id === 1; // we specifically handle id 1 as requested
+
+                if (hasSecondVideo) {
+                    // Create two video elements, second hidden initially
+                    const video1 = createVideoElement(`videos/${app.videoFile}`, true, false);
+                    video1.classList.add('primary-video');
+                    video1.style.display = 'block';
+
+                    const video2 = createVideoElement(`videos/${app.videoFile1}`, true, false);
+                    video2.classList.add('secondary-video');
+                    video2.style.display = 'none';
+
+                    // append both
+                    videoWrapper.appendChild(video1);
+                    videoWrapper.appendChild(video2);
+
+                    // play overlay
+                    const overlay = document.createElement('div');
+                    overlay.className = 'play-overlay';
+                    overlay.innerHTML = '<i class="fas fa-play-circle"></i>';
+                    videoWrapper.appendChild(overlay);
+
+                    // Store reference in map for events
+                    dualVideoWrappers.set(app.id, {
+                        wrapper: videoWrapper,
+                        videos: [video1, video2],
+                        currentIndex: 0,   // 0 = first video, 1 = second
+                        overlay: overlay
+                    });
+
+                    // Attach dual video specific handlers
+                    attachDualVideoHandlers(app.id, videoWrapper, video1, video2, overlay);
+
+                } else {
+                    // normal single video
+                    const video = createVideoElement(`videos/${app.videoFile}`, true, false);
+                    videoWrapper.appendChild(video);
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'play-overlay';
+                    overlay.innerHTML = '<i class="fas fa-play-circle"></i>';
+                    videoWrapper.appendChild(overlay);
+
+                    // attach standard handlers
+                    attachStandardVideoHandlers(videoWrapper, video, overlay);
+                }
+
+                card.appendChild(videoWrapper);
+            }
+
+            // --- card content ---
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'card-content';
+
+            // header
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'card-header';
+            headerDiv.innerHTML = `
+                <h3><i class="fas ${app.icon}"></i> ${app.name}</h3>
+                <span class="price-badge"><i class="fas fa-tag"></i> ${app.sourcePrice}</span>
+            `;
+            contentDiv.appendChild(headerDiv);
+
+            // description
+            const descP = document.createElement('p');
+            descP.className = 'app-desc';
+            descP.textContent = app.desc;
+            contentDiv.appendChild(descP);
+
+            // action row
+            const actionRow = document.createElement('div');
+            actionRow.className = 'action-row';
+
+            // build dynamic action links exactly as original
+            if (app.apkFile) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = '#';
+                downloadLink.className = 'download-btn';
+                downloadLink.setAttribute('data-apk', app.apkFile);
+                downloadLink.title = 'Download APK';
+                downloadLink.innerHTML = '<i class="fas fa-download"></i> Download';
+                actionRow.appendChild(downloadLink);
+            }
+            if (app.mmgLink) {
+                const mmgLink = document.createElement('a');
+                mmgLink.href = app.mmgLink;
+                mmgLink.className = 'store-btn amazon';
+                mmgLink.title = 'MMG';
+                mmgLink.innerHTML = '<i class="fas fa-wallet"></i> MMG';
+                actionRow.appendChild(mmgLink);
+            }
+            if (app.amazonLink) {
+                const a = document.createElement('a');
+                a.href = app.amazonLink;
+                a.className = 'store-btn amazon';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'Amazon Store';
+                a.innerHTML = '<i class="fab fa-amazon"></i> Store';
+                actionRow.appendChild(a);
+            }
+            if (app.itchLink) {
+                const a = document.createElement('a');
+                a.href = app.itchLink;
+                a.className = 'store-btn itch';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'Itch.io';
+                a.innerHTML = '<i class="fas fa-store"></i> Itch.io';
+                actionRow.appendChild(a);
+            }
+            if (app.huaweiLink) {
+                const a = document.createElement('a');
+                a.href = app.huaweiLink;
+                a.className = 'store-btn itch';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'Huawei';
+                a.innerHTML = '<i class="fas fa-store"></i> Huawei';
+                actionRow.appendChild(a);
+            }
+            if (app.apkpureLink) {
+                const a = document.createElement('a');
+                a.href = app.apkpureLink;
+                a.className = 'store-btn itch';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'APKPure';
+                a.innerHTML = '<i class="fas fa-store"></i> APKPure';
+                actionRow.appendChild(a);
+            }
+            if (app.uptodownLink) {
+                const a = document.createElement('a');
+                a.href = app.uptodownLink;
+                a.className = 'store-btn itch';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'Uptodown';
+                a.innerHTML = '<i class="fas fa-store"></i> Uptodown';
+                actionRow.appendChild(a);
+            }
+            if (app.playLink) {
+                const a = document.createElement('a');
+                a.href = app.playLink;
+                a.className = 'store-btn google';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'Google Play';
+                a.innerHTML = '<i class="fab fa-google-play"></i> Play';
+                actionRow.appendChild(a);
+            }
+            if (app.samsungLink) {
+                const a = document.createElement('a');
+                a.href = app.samsungLink;
+                a.className = 'store-btn samsung';
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.title = 'Samsung Galaxy';
+                a.innerHTML = '<i class="fas fa-store"></i> Galaxy';
+                actionRow.appendChild(a);
+            }
+            if (app.sourceLink) {
+                const a = document.createElement('a');
+                a.href = app.sourceLink;
+                a.className = 'source-btn';
+                a.title = 'Buy source';
+                a.innerHTML = '<i class="fas fa-code"></i> Source';
+                actionRow.appendChild(a);
+            }
+
+            contentDiv.appendChild(actionRow);
+            card.appendChild(contentDiv);
+            grid.appendChild(card);
+        });
+
+        attachDownloadHandlers();
+    }
+
+    // Standard single video handlers (click/hover/ended)
+    function attachStandardVideoHandlers(wrapper, video, overlay) {
+        wrapper.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (video.muted) video.muted = false;
+            if (video.paused) {
+                video.play().catch(() => {});
+                if (overlay) overlay.style.opacity = "0";
+            } else {
+                video.pause();
+                if (overlay) overlay.style.opacity = "0.9";
+            }
+        });
+
+        wrapper.addEventListener("mouseenter", () => {
+            video.muted = false;
+            video.play().catch(() => {});
+            if (overlay) overlay.style.opacity = "0";
+        });
+
+        wrapper.addEventListener("mouseleave", () => {
+            video.pause();
+            if (overlay) overlay.style.opacity = "0.9";
+        });
+
+        video.addEventListener("ended", () => {
+            if (overlay) overlay.style.opacity = "0.9";
+        });
+    }
+
+    // Dual video handlers: when first video ends, switch to second and play automatically
+    function attachDualVideoHandlers(appId, wrapper, video1, video2, overlay) {
+        const state = dualVideoWrappers.get(appId);
+        if (!state) return;
+
+        // Ensure overlay is above both videos
+        overlay.style.zIndex = '10';
+
+        // When first video ends -> switch to second video and play
+        video1.addEventListener('ended', () => {
+            // hide first, show second
+            video1.style.display = 'none';
+            video2.style.display = 'block';
+            // reset second video to beginning
+            video2.currentTime = 0;
+            // play second video (muted? we want audio to continue from user interaction, but if user never interacted, we cannot unmute. So keep muted maybe)
+            // but we try to preserve mute state: we set video2.muted = false if video1 was unmuted.
+            video2.muted = video1.muted; // keep same mute state
+            video2.play().catch(() => {
+                // if browser blocks, fallback show overlay? 
+                // We'll keep overlay visible if autoplay fails
+                if (overlay) overlay.style.opacity = "0.9";
+            });
+            if (overlay) overlay.style.opacity = "0"; // hide overlay while playing
+            state.currentIndex = 1;
+        });
+
+        // When second video ends: hide overlay? show play icon, but also could loop? We'll just show overlay and reset to first video? 
+        // For better UX, after second video ends we reset to first video (so user can replay). 
+        // But original behaviour: show overlay. Let's reset to first video but keep overlay hidden? We'll reset both to initial state.
+        video2.addEventListener('ended', () => {
+            // after second ends: reset to first video and show overlay
+            video2.style.display = 'none';
+            video1.style.display = 'block';
+            video1.currentTime = 0;
+            video1.muted = true; // reset to muted
+            if (overlay) overlay.style.opacity = "0.9";
+            state.currentIndex = 0;
+            // pause video1 (it's not playing)
+            video1.pause();
+        });
+
+        // Click handler for dual wrapper: complex because we need to handle based on current video
+        wrapper.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const currentIndex = state.currentIndex;
+            const currentVideo = currentIndex === 0 ? video1 : video2;
+            const otherVideo = currentIndex === 0 ? video2 : video1;
+
+            if (currentVideo.muted) currentVideo.muted = false;
+            if (currentVideo.paused) {
+                // if video1 is paused and we click, play it and hide overlay
+                currentVideo.play().catch(() => {});
+                if (overlay) overlay.style.opacity = "0";
+                // also make sure the other video is paused and hidden
+                otherVideo.pause();
+                otherVideo.style.display = 'none';
+                currentVideo.style.display = 'block';
+            } else {
+                currentVideo.pause();
+                if (overlay) overlay.style.opacity = "0.9";
+            }
+        });
+
+        // Hover: we want to play current video
+        wrapper.addEventListener("mouseenter", () => {
+            const currentIndex = state.currentIndex;
+            const currentVideo = currentIndex === 0 ? video1 : video2;
+            currentVideo.muted = false;
+            currentVideo.play().catch(() => {});
+            if (overlay) overlay.style.opacity = "0";
+        });
+
+        wrapper.addEventListener("mouseleave", () => {
+            const currentIndex = state.currentIndex;
+            const currentVideo = currentIndex === 0 ? video1 : video2;
+            currentVideo.pause();
+            if (overlay) overlay.style.opacity = "0.9";
+        });
+
+        // Additional: handle if video1 is played manually then ends -> handled above.
+        // Ensure that when video1 is playing, video2 is hidden and paused
+        // Also if video2 is displayed and playing, video1 should be hidden.
+        // Already handled by display and end events.
+    }
+
+    function attachDownloadHandlers() {
+        document.querySelectorAll(".download-btn").forEach((btn) => {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                const apkPath = this.getAttribute("data-apk");
+                if (!apkPath) return;
+                const link = document.createElement("a");
+                link.href = apkPath;
+                link.download = apkPath.split("/").pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        });
+    }
+
+    // Modal logic (kept from original)
+    const modal = document.getElementById("contactModal");
+    const closeBtn = document.getElementById("closeModalBtn");
+    const sellCta = document.getElementById("sellCtaBtn");
+
+    function closeModal() {
+        if (modal) modal.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+    if (sellCta) {
+        sellCta.addEventListener("click", function (e) {
+            e.preventDefault();
+            window.location.href = "index.html";
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal && modal.classList.contains("active")) {
+            closeModal();
+        }
+    });
+
+    // Initialize
+    renderAppNamesBar();
+    renderApps();
+
+    // After render, ensure that for any dual video wrappers, the second video is hidden
+    // (already set in render, but double-check)
+    dualVideoWrappers.forEach((state) => {
+        if (state.videos[1]) state.videos[1].style.display = 'none';
+        if (state.videos[0]) state.videos[0].style.display = 'block';
+    });
+
+})();
+</script>
+</body>
+</html>
